@@ -4,7 +4,6 @@ import 'package:flutter_statusbar_manager/flutter_statusbar_manager.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter_rating/flutter_rating.dart';
 
-
 void main() => runApp(new MyApp());
 
 class MyApp extends StatelessWidget {
@@ -23,8 +22,18 @@ class HomeScreen extends StatelessWidget {
     return CupertinoPageScaffold(
       navigationBar: CupertinoNavigationBar(
           backgroundColor: Colors.transparent,
+          leading: Icon(CupertinoIcons.search),
           middle: Text('Sat, June 15th'),
-          trailing: Icon(CupertinoIcons.person_solid)),
+          trailing: SizedBox(
+                  height: 18.0,
+                  width: 18.0,
+                  child: new CupertinoButton(
+                      padding: new EdgeInsets.all(0.0),
+                      color: Colors.blueGrey,
+                      child: new Icon(CupertinoIcons.person, size: 18.0),
+                      onPressed: () => {},
+                  )
+                )),
       child: ListView(
         children: <Widget>[
           Post(),
@@ -54,7 +63,7 @@ class PostImages extends StatefulWidget {
 class _PostImagesState extends State<PostImages> {
   int photoIndex = 0;
 
-  List<String> photos = ['assets/princess2.JPG','assets/princess.gif','assets/giphy.gif', 'assets/wallpaper.jpg'];
+  List<String> photos = ['assets/princess2.JPG', 'assets/princess.gif'];
 
   @override
   Widget build(BuildContext context) {
@@ -96,32 +105,45 @@ class _ProfileCardState extends State<ProfileCard> {
         margin: const EdgeInsets.only(top: 500.0),
         child: Column(children: <Widget>[
           Opacity(
-            opacity: .75,
-            child:Card(
-            child: Column(
-              mainAxisSize: MainAxisSize.max,
-              children: <Widget>[
-                const ListTile(
-                    leading: CircleAvatar(
-                      backgroundImage: AssetImage('assets/profile_pic.jpg'),
-                      radius: 25.0,
-                    ),
-                    title: Text(
-                      'Princess\'s 2nd Birthday Celebration ',
-                    ),
-                    subtitle: Text("3:00pm to 7:00pm")),
-              ],
-            ),
-          )),
+              opacity: .75,
+              child: Card(
+                child: Column(
+                  mainAxisSize: MainAxisSize.max,
+                  children: <Widget>[
+                    const ListTile(
+                        leading: CircleAvatar(
+                          backgroundImage: AssetImage('assets/profile_pic.jpg'),
+                          radius: 25.0,
+                        ),
+                        title: Text(
+                          'Princess\'s 2nd Birthday Celebration ',
+                        ),
+                        subtitle: Text("3:00pm to 7:00pm")),
+                  ],
+                ),
+              )),
           StarCount(),
-          ButtonBar(children: <Widget>[
-            FlatButton(child: Icon(CupertinoIcons.mail, size: 40.0,),textColor: CupertinoColors.activeBlue, onPressed: () => {},),
-            FlatButton(child: Icon(CupertinoIcons.person_add, size: 40.0,),textColor: CupertinoColors.activeGreen, onPressed: () => {},)
-
-          ],
-          alignment: MainAxisAlignment.spaceBetween,
+          ButtonBar(
+            children: <Widget>[
+              FlatButton(
+                child: Icon(
+                  CupertinoIcons.mail,
+                  size: 40.0,
+                ),
+                textColor: CupertinoColors.activeBlue,
+                onPressed: () => {},
+              ),
+              FlatButton(
+                child: Icon(
+                  CupertinoIcons.person_add,
+                  size: 40.0,
+                ),
+                textColor: CupertinoColors.activeGreen,
+                onPressed: () => {},
+              )
+            ],
+            alignment: MainAxisAlignment.spaceBetween,
           )
-
         ]));
   }
 }
@@ -137,26 +159,24 @@ class _StarCountState extends State<StarCount> {
 
   @override
   Widget build(BuildContext context) {
-    return      new Column(
-        children: <Widget>[
-          new Padding(
-            padding: new EdgeInsets.only(
-              top: 20.0,
-            ),
-            child: new StarRating(
-              size: 25.0,
-              rating: rating,
-              color: Colors.orange,
-              borderColor: Colors.grey,
-              starCount: starCount,
-              onRatingChanged: (rating) => setState(
-                    () {
-                      this.rating = rating;
-                    },
-                  ),
-            ),
-          ),
-        ]
-    );
+    return new Column(children: <Widget>[
+      new Padding(
+        padding: new EdgeInsets.only(
+          top: 20.0,
+        ),
+        child: new StarRating(
+          size: 25.0,
+          rating: rating,
+          color: Colors.orange,
+          borderColor: Colors.grey,
+          starCount: starCount,
+          onRatingChanged: (rating) => setState(
+                () {
+                  this.rating = rating;
+                },
+              ),
+        ),
+      ),
+    ]);
   }
 }
