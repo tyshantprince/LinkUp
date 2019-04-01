@@ -2,7 +2,9 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_statusbar_manager/flutter_statusbar_manager.dart';
 import 'package:carousel_slider/carousel_slider.dart';
-import 'package:flutter_rating/flutter_rating.dart';
+import "package:cloud_firestore/cloud_firestore.dart";
+import 'package:intl/intl.dart';
+import 'dart:developer';
 
 void main() => runApp(new MyApp());
 
@@ -16,43 +18,55 @@ class MyApp extends StatelessWidget {
 class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    // Hides Toolbar
     FlutterStatusbarManager.setHidden(true,
         animation: StatusBarAnimation.SLIDE);
 
+// Initial Home Page Template
     return CupertinoPageScaffold(
-      navigationBar: CupertinoNavigationBar(
+        //Navigation Bar
+        navigationBar: CupertinoNavigationBar(
           backgroundColor: Colors.transparent,
-          leading: Icon(CupertinoIcons.search),
+          trailing: Icon(CupertinoIcons.photo_camera_solid), // Search Button
           middle: Text('Sat, June 15th'),
-          trailing: SizedBox(
-                  height: 18.0,
-                  width: 18.0,
-                  child: new CupertinoButton(
-                      padding: new EdgeInsets.all(0.0),
-                      color: Colors.blueGrey,
-                      child: new Icon(CupertinoIcons.person, size: 18.0),
-                      onPressed: () => {},
-                  )
-                )),
-      child: ListView(
-        children: <Widget>[
-          Post(),
-        ],
-      ),
-    );
+        ), // Current Date
+        child: StreamBuilder(
+          stream: Firestore.instance.collection('posts').snapshots(),
+          builder: (context, snapshot) {
+            if (!snapshot.hasData) return Text("Loading...");
+            return ListView.builder(
+              itemCount: snapshot.data.documents.length,
+              itemBuilder: (context, index) {
+                return _buildListItem(context, snapshot.data.documents[index]);
+              },
+            );
+          },
+        ));
+  }
+
+  Widget _buildListItem(BuildContext context, DocumentSnapshot document) {
+    return Container(
+        child: Post(
+            document: document,
+            child: Stack(
+              children: <Widget>[
+                PostImages(),
+                ProfileCard(),
+              ],
+            )));
   }
 }
 
-class Post extends StatelessWidget {
+class Post extends InheritedWidget {
+  final DocumentSnapshot document;
+
+  Post({this.document, Widget child}) : super(child: child);
+
   @override
-  Widget build(BuildContext context) {
-    return Stack(
-      children: <Widget>[
-        PostImages(),
-        ProfileCard(),
-      ],
-    );
-  }
+  bool updateShouldNotify(InheritedWidget oldWidget) => true;
+
+  static Post of(BuildContext context) =>
+      context.inheritFromWidgetOfExactType(Post);
 }
 
 class PostImages extends StatefulWidget {
@@ -63,10 +77,15 @@ class PostImages extends StatefulWidget {
 class _PostImagesState extends State<PostImages> {
   int photoIndex = 0;
 
-  List<String> photos = ['assets/princess2.JPG', 'assets/princess.gif'];
-
   @override
   Widget build(BuildContext context) {
+    final document = Post.of(context).document;
+    List<String> photos = [];
+    log("Document: ${document["media"]}");
+    for (var i in document['media']) {
+      photos.add(i);
+    }
+
     return (Column(children: <Widget>[
       CarouselSlider(
         enableInfiniteScroll: false,
@@ -82,7 +101,7 @@ class _PostImagesState extends State<PostImages> {
                 child: Container(
                   decoration: BoxDecoration(
                       image: DecorationImage(
-                          image: AssetImage(i), fit: BoxFit.cover)),
+                          image: NetworkImage(i), fit: BoxFit.cover)),
                 ),
               );
             },
@@ -101,6 +120,17 @@ class ProfileCard extends StatefulWidget {
 class _ProfileCardState extends State<ProfileCard> {
   @override
   Widget build(BuildContext context) {
+    final document = Post.of(context).document;
+    final start_date = DateTime.fromMillisecondsSinceEpoch(
+        document["start_time"].seconds * 1000);
+    final formatted_start_date = new DateFormat.yMMMMEEEEd().format(start_date);
+    final formatted_start_time = new DateFormat.jm().format(start_date);
+
+    final end_date = DateTime.fromMillisecondsSinceEpoch(
+        document["end_time"].seconds * 1000);
+    final formatted_end_date = new DateFormat.yMMMMEEEEd().format(end_date);
+    final formatted_end_time = new DateFormat.jm().format(end_date);
+
     return Container(
         margin: const EdgeInsets.only(top: 500.0),
         child: Column(children: <Widget>[
@@ -110,19 +140,21 @@ class _ProfileCardState extends State<ProfileCard> {
                 child: Column(
                   mainAxisSize: MainAxisSize.max,
                   children: <Widget>[
-                    const ListTile(
-                        leading: CircleAvatar(
-                          backgroundImage: AssetImage('assets/profile_pic.jpg'),
-                          radius: 25.0,
-                        ),
-                        title: Text(
-                          'Princess\'s 2nd Birthday Celebration ',
-                        ),
-                        subtitle: Text("3:00pm to 7:00pm")),
+                    ListTile(
+                      leading: CircleAvatar(
+                        backgroundImage: AssetImage('assets/profile_pic.jpg'),
+                        radius: 25.0,
+                      ),
+                      title: Text(document["title"]),
+                      subtitle: Text(formatted_start_date +
+                          "\n" +
+                          formatted_start_time +
+                          " to " +
+                          formatted_end_time),
+                    )
                   ],
                 ),
               )),
-          StarCount(),
           ButtonBar(
             children: <Widget>[
               FlatButton(
@@ -145,38 +177,5 @@ class _ProfileCardState extends State<ProfileCard> {
             alignment: MainAxisAlignment.spaceBetween,
           )
         ]));
-  }
-}
-
-class StarCount extends StatefulWidget {
-  @override
-  _StarCountState createState() => new _StarCountState();
-}
-
-class _StarCountState extends State<StarCount> {
-  double rating = 3.5;
-  int starCount = 5;
-
-  @override
-  Widget build(BuildContext context) {
-    return new Column(children: <Widget>[
-      new Padding(
-        padding: new EdgeInsets.only(
-          top: 20.0,
-        ),
-        child: new StarRating(
-          size: 25.0,
-          rating: rating,
-          color: Colors.orange,
-          borderColor: Colors.grey,
-          starCount: starCount,
-          onRatingChanged: (rating) => setState(
-                () {
-                  this.rating = rating;
-                },
-              ),
-        ),
-      ),
-    ]);
   }
 }
