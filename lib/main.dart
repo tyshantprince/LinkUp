@@ -5,6 +5,8 @@ import 'package:carousel_slider/carousel_slider.dart';
 import "package:cloud_firestore/cloud_firestore.dart";
 import 'package:intl/intl.dart';
 import 'dart:developer';
+import 'package:transparent_image/transparent_image.dart';
+
 
 void main() => runApp(new MyApp());
 
@@ -97,11 +99,23 @@ class _PostImagesState extends State<PostImages> {
             builder: (BuildContext context) {
               return Container(
                 width: MediaQuery.of(context).size.width,
+                height: MediaQuery.of(context).size.height,
                 decoration: BoxDecoration(color: Colors.transparent),
-                child: Container(
+                child:
+                Container(
                   decoration: BoxDecoration(
-                      image: DecorationImage(
-                          image: NetworkImage(i), fit: BoxFit.cover)),
+                    image: DecorationImage(
+                      image: AssetImage('assets/loading.gif')
+                    )
+                  ),
+                  child: FadeInImage.memoryNetwork(
+                    image: i,
+                    height: MediaQuery.of(context).size.height,
+                    fit: BoxFit.cover,
+                    placeholder: kTransparentImage,
+                    alignment: Alignment.center,
+                    fadeInDuration: Duration(milliseconds: 200),
+                  ),
                 ),
               );
             },
