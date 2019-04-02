@@ -6,15 +6,76 @@ import "package:cloud_firestore/cloud_firestore.dart";
 import 'package:intl/intl.dart';
 import 'dart:developer';
 import 'package:transparent_image/transparent_image.dart';
-
+import 'package:flutter_auth_buttons/flutter_auth_buttons.dart';
+import 'package:flutter_facebook_login/flutter_facebook_login.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 void main() => runApp(new MyApp());
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
+  @override
+  _MyAppState createState() => new _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  FirebaseUser myUser;
+
+  bool isLoggedIn = false;
+  FirebaseAuth _auth = FirebaseAuth.instance;
+
+  Future<FirebaseUser> _loginWithFacebook() async {
+    var facebookLogin = new FacebookLogin();
+    var result = await facebookLogin.logInWithReadPermissions(['email']);
+
+    debugPrint(result.status.toString());
+
+    if (result.status == FacebookLoginStatus.loggedIn) {
+      final AuthCredential credential = FacebookAuthProvider.getCredential(
+          accessToken: result.accessToken.token);
+      FirebaseUser user = await _auth.signInWithCredential(credential);
+      return user;
+    }
+    return null;
+  }
+
+  void _login() {
+    _loginWithFacebook().then((response) {
+      if (response != null) {
+        myUser = response;
+        isLoggedIn = true;
+        debugPrint(myUser.toString());
+        setState(() {});
+      }
+    });
+  }
+
   @override
   build(BuildContext context) {
-    return CupertinoApp(title: 'App', home: HomeScreen());
+    return CupertinoApp(
+        title: 'App',
+        home: isLoggedIn
+            ? HomeScreen()
+            : CupertinoPageScaffold(
+                navigationBar: CupertinoNavigationBar(
+                  backgroundColor: Colors.transparent,
+                ),
+                child: Center(
+                  child: FacebookSignInButton(
+                    onPressed: _login,
+                  ),
+                ),
+              ));
   }
+}
+
+class SignIn extends InheritedWidget {
+  SignIn({Widget child}) : super(child: child);
+
+  @override
+  bool updateShouldNotify(InheritedWidget oldWidget) => true;
+
+  static Post of(BuildContext context) =>
+      context.inheritFromWidgetOfExactType(Post);
 }
 
 class HomeScreen extends StatelessWidget {
@@ -29,7 +90,7 @@ class HomeScreen extends StatelessWidget {
         //Navigation Bar
         navigationBar: CupertinoNavigationBar(
           backgroundColor: Colors.transparent,
-          trailing: Icon(CupertinoIcons.photo_camera_solid), // Search Button
+          leading: Icon(CupertinoIcons.photo_camera_solid), // Search Button
           middle: Text('Sat, June 15th'),
         ), // Current Date
         child: StreamBuilder(
@@ -101,13 +162,11 @@ class _PostImagesState extends State<PostImages> {
                 width: MediaQuery.of(context).size.width,
                 height: MediaQuery.of(context).size.height,
                 decoration: BoxDecoration(color: Colors.transparent),
-                child:
-                Container(
+                child: Container(
                   decoration: BoxDecoration(
-                    image: DecorationImage(
-                      image: AssetImage('assets/loading.gif')
-                    )
-                  ),
+                      image: DecorationImage(
+                          image: AssetImage('assets/loading.gif'),
+                          alignment: Alignment(0, -0.5))),
                   child: FadeInImage.memoryNetwork(
                     image: i,
                     height: MediaQuery.of(context).size.height,
