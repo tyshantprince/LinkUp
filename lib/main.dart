@@ -51,7 +51,9 @@ class _MyAppState extends State<MyApp> {
 
   @override
   build(BuildContext context) {
-    return CupertinoApp(
+    return Root(
+      user: myUser,
+      child: CupertinoApp(
         title: 'App',
         home: isLoggedIn
             ? HomeScreen()
@@ -64,18 +66,20 @@ class _MyAppState extends State<MyApp> {
                     onPressed: _login,
                   ),
                 ),
-              ));
+              ))
+              );
   }
 }
 
-class SignIn extends InheritedWidget {
-  SignIn({Widget child}) : super(child: child);
+class Root extends InheritedWidget {
+  final FirebaseUser user;
+  Root({this.user ,Widget child}) : super(child: child);
 
   @override
   bool updateShouldNotify(InheritedWidget oldWidget) => true;
 
-  static Post of(BuildContext context) =>
-      context.inheritFromWidgetOfExactType(Post);
+  static Root of(BuildContext context) =>
+      context.inheritFromWidgetOfExactType(Root);
 }
 
 class HomeScreen extends StatelessWidget {
@@ -84,6 +88,8 @@ class HomeScreen extends StatelessWidget {
     // Hides Toolbar
     FlutterStatusbarManager.setHidden(true,
         animation: StatusBarAnimation.SLIDE);
+
+    final user = Root.of(context).user;
 
 // Initial Home Page Template
     return CupertinoPageScaffold(
