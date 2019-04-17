@@ -9,6 +9,7 @@ import 'package:transparent_image/transparent_image.dart';
 import 'package:flutter_auth_buttons/flutter_auth_buttons.dart';
 import 'package:flutter_facebook_login/flutter_facebook_login.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_icons/flutter_icon_data.dart';
 
 void main() => runApp(new MyApp());
 
@@ -52,28 +53,30 @@ class _MyAppState extends State<MyApp> {
   @override
   build(BuildContext context) {
     return Root(
-      user: myUser,
-      child: CupertinoApp(
-        title: 'App',
-        home: isLoggedIn
-            ? HomeScreen()
-            : CupertinoPageScaffold(
-                navigationBar: CupertinoNavigationBar(
-                  backgroundColor: Colors.transparent,
-                ),
-                child: Center(
-                  child: FacebookSignInButton(
-                    onPressed: _login,
-                  ),
-                ),
-              ))
-              );
+        user: myUser,
+        child: CupertinoApp(
+          title: 'App',
+          home: HomeScreen(),
+        ));
+    // home: isLoggedIn
+    //     ? HomeScreen()
+    //     : CupertinoPageScaffold(
+    //         navigationBar: CupertinoNavigationBar(
+    //           backgroundColor: Colors.transparent,
+    //         ),
+    //         child: Center(
+    //           child: FacebookSignInButton(
+    //             onPressed: _login,
+    //           ),
+    //         ),
+    //       ))
+    //       );
   }
 }
 
 class Root extends InheritedWidget {
   final FirebaseUser user;
-  Root({this.user ,Widget child}) : super(child: child);
+  Root({this.user, Widget child}) : super(child: child);
 
   @override
   bool updateShouldNotify(InheritedWidget oldWidget) => true;
@@ -97,7 +100,7 @@ class HomeScreen extends StatelessWidget {
         navigationBar: CupertinoNavigationBar(
           backgroundColor: Colors.transparent,
           leading: Icon(CupertinoIcons.photo_camera_solid), // Search Button
-          middle: Text('Sat, June 15th'),
+          trailing: Icon(CupertinoIcons.profile_circled),
         ), // Current Date
         child: StreamBuilder(
           stream: Firestore.instance.collection('posts').snapshots(),
@@ -115,12 +118,21 @@ class HomeScreen extends StatelessWidget {
 
   Widget _buildListItem(BuildContext context, DocumentSnapshot document) {
     return Container(
+        height: MediaQuery.of(context).size.height,
+        width: MediaQuery.of(context).size.width,
+        color: Colors.white70,
         child: Post(
             document: document,
             child: Stack(
               children: <Widget>[
-                PostImages(),
-                ProfileCard(),
+
+                Column(
+                  children: <Widget>[
+                    DateSelector(),
+                    PostImages(),
+                  ],
+                ),
+                // ProfileCard(),
               ],
             )));
   }
@@ -136,6 +148,47 @@ class Post extends InheritedWidget {
 
   static Post of(BuildContext context) =>
       context.inheritFromWidgetOfExactType(Post);
+}
+
+class DateSelector extends StatefulWidget {
+  @override
+  _DateSelectorState createState() => new _DateSelectorState();
+}
+
+class _DateSelectorState extends State<DateSelector> {
+  int photoIndex = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    final document = Post.of(context).document;
+    List<String> photos = [];
+    log("Document: ${document["media"]}");
+    for (var i in document['media']) {
+      photos.add(i);
+    }
+
+    return (Column(children: <Widget>[
+      Container(
+        margin: EdgeInsets.only(top: 5),
+        height: 75,
+        width: 350,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(18),
+                    child: Center(
+                      child: Text.rich(
+                        
+  TextSpan(
+    style: TextStyle(fontSize: 24),
+    children: <TextSpan>[
+      TextSpan(text: ' Tuesday ', style: TextStyle(fontStyle: FontStyle.italic)),
+      TextSpan(text: 'June 15th', style: TextStyle(fontWeight: FontWeight.bold)),
+    ],
+  ),
+))
+        ),
+      ),
+    ]));
+  }
 }
 
 class PostImages extends StatefulWidget {
@@ -156,36 +209,46 @@ class _PostImagesState extends State<PostImages> {
     }
 
     return (Column(children: <Widget>[
-      CarouselSlider(
-        enableInfiniteScroll: false,
-        initialPage: 0,
-        viewportFraction: 1.0,
-        height: MediaQuery.of(context).size.height,
-        items: photos.map((i) {
-          return Builder(
-            builder: (BuildContext context) {
-              return Container(
-                width: MediaQuery.of(context).size.width,
-                height: MediaQuery.of(context).size.height,
-                decoration: BoxDecoration(color: Colors.transparent),
-                child: Container(
-                  decoration: BoxDecoration(
-                      image: DecorationImage(
-                          image: AssetImage('assets/loading.gif'),
-                          alignment: Alignment(0, -0.5))),
-                  child: FadeInImage.memoryNetwork(
-                    image: i,
-                    height: MediaQuery.of(context).size.height,
-                    fit: BoxFit.cover,
-                    placeholder: kTransparentImage,
-                    alignment: Alignment.center,
-                    fadeInDuration: Duration(milliseconds: 200),
-                  ),
-                ),
-              );
-            },
-          );
-        }).toList(),
+      Center(
+        child: Container(
+          margin: EdgeInsets.all(5),
+          height: 500,
+          width: 350,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(18),
+                      child: CarouselSlider(
+              enableInfiniteScroll: false,
+              initialPage: 0,
+              viewportFraction: 1.0,
+              height: MediaQuery.of(context).size.height ,
+              items: photos.map((i) {
+                return Builder(
+                  builder: (BuildContext context) {
+                    return Container(
+                      width: MediaQuery.of(context).size.width,
+                      height: MediaQuery.of(context).size.height ,
+                      decoration: BoxDecoration(color: Colors.transparent),
+                      child: Container(
+                        decoration: BoxDecoration(
+                            image: DecorationImage(
+                                image: AssetImage('assets/loading.gif'),
+                                alignment: Alignment(0, -0.5))),
+                        child: FadeInImage.memoryNetwork(
+                          image: i,
+                          height: MediaQuery.of(context).size.height ,
+                          fit: BoxFit.cover,
+                          placeholder: kTransparentImage,
+                          alignment: Alignment.center,
+                          fadeInDuration: Duration(milliseconds: 200),
+                        ),
+                      ),
+                    );
+                  },
+                );
+              }).toList(),
+            ),
+          ),
+        ),
       ),
     ]));
   }
@@ -211,7 +274,7 @@ class _ProfileCardState extends State<ProfileCard> {
     final formatted_end_time = new DateFormat.jm().format(end_date);
 
     return Container(
-        margin: const EdgeInsets.only(top: 500.0),
+        padding: const EdgeInsets.only(top: 400.0),
         child: Column(children: <Widget>[
           Opacity(
               opacity: .75,
